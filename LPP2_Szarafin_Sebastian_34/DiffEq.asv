@@ -1,0 +1,43 @@
+function [out] = DiffEq(order, f, x0, b, n, y_x0, d_y_x0)
+%% Sebastian Szarafin 313460
+% DiffEq - funkcja przybliżająca rozwiązanie układu różniczkowego z
+%          warunkami początkowymi rzędu 1: y' = f(y),
+%          lub rzędu 2: y'' = f(y) na przedziale [x0, b]
+% WEJŚCIE:  order   -   zmienna określająca rząd równania ze zbioru {1, 2} 
+%           f       -   funkcja po prawej stronie równości
+%           x0      -   punkt startowy, lewy kraniec przedziału
+%           b       -   punkt końcowy, prawy kraniec przedziału
+%           n       -   liczba punktów pośrednich między x0 i b (n >= 3)
+%           y_x0    -   wartość funkcji y w punkcie x0
+%           d_y_x0  -   wartość pochodnej funkcji y w punkcie x0 (jeśli
+%                       równanie jest rzędu 1 ta zmienna pozostaje pusta)
+% WYJŚCIE:  out     -   ???
+
+%% algorytm
+% Metoda Rungego-Kutty, rząd 4
+h = (b-x0)/n;
+Y = zeros(order+1, n+1);
+if order == 1
+    Y(:,1) = [x0 y_x0]; 
+elseif order == 2
+    Y(:,1) = [x0 y_x0 d_y_x0]; 
+else
+    error("Niepoprawny rząd równania!");
+end
+for k = 1:3
+    K0 = FY(Y(:,k), f);
+    K1 = FY(Y(:,k)+1/2*h*K0, f);
+    K2 = FY(Y(:,k)+1/2*h*K1, f);
+    K3 = FY(Y(:,k)+h*K2, f);
+    Y(:,k+1) = Y(:,k)+h*(K0+2*K1+2*K2+K3)/6;
+end
+% Metoda Adamsa-Bashfortha, rząd 4
+alfa = [55 -59 37 -9];
+for k = 4:n
+    F_ki = [FY(Y(:,k), f) FY(Y(:,k-1), f) FY(Y(:,k-2), f) FY(Y(:,k-3), f)];
+    Y(:,k+1) = Y(:,k)+h*sum(alfa.*F_ki,2)/24;
+end
+out = Y;
+
+end
+
